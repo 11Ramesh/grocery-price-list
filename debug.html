@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Debug</title></head>
+<body style="font-family:monospace;padding:20px;background:#111;color:#0f0;">
+<h2 style="color:#fff">CSV Fetch Debug</h2>
+<pre id="out">Testing...</pre>
+<script>
+const URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRjdEBDxL3kb1YmEQnyY-hHTCZGJKw86-EidYjSn1_K9rOnNM_DyPomBK5iDKELyYXB0hzRPEeTf8IZ/pub?output=csv&gid=0";
+
+const out = document.getElementById("out");
+function log(msg) { out.textContent += "\n" + msg; console.log(msg); }
+
+log("Fetching: " + URL);
+
+// No custom headers — avoids CORS preflight
+fetch(URL + "&_cb=" + Date.now())
+  .then(r => {
+    log("HTTP Status: " + r.status + " " + r.statusText);
+    log("Content-Type: " + r.headers.get("content-type"));
+    log("CORS header: " + r.headers.get("access-control-allow-origin"));
+    return r.text();
+  })
+  .then(text => {
+    log("SUCCESS! Got " + text.length + " chars");
+    log("Raw CSV:\n" + text);
+  })
+  .catch(err => {
+    log("FETCH ERROR: " + err);
+    log("Type: " + err.constructor.name);
+    log("Message: " + err.message);
+  });
+</script>
+</body>
+</html>
+

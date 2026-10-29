@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="si" dir="ltr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="ශ්‍රී ලාංකේය සිල්ලර කඩේ — අද දවසේ භාණ්ඩ මිල දර්ශනය" />
+  <meta name="theme-color" content="#1a3d2b" />
+
+  <!-- Open Graph / Social sharing -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="කඩේ මිල දර්ශනය" />
+  <meta property="og:description" content="අද දවසේ ග්‍රොසරි භාණ්ඩ මිල ගණන්" />
+
+  <title>Grocery Price List</title>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Preconnect for font performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       HEADER
+  ═══════════════════════════════════════════ -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <div class="header-top">
+
+        <!-- Shop Logo (icon placeholder until real logo is provided) -->
+        <div class="shop-logo" aria-hidden="true">🛒</div>
+
+        <!-- Shop name and subtitle (set by config.js) -->
+        <div class="shop-name-block">
+          <h1 id="shop-name">...පූරණය වෙමින්...</h1>
+          <p id="shop-subtitle"></p>
+        </div>
+
+        <!-- Currency badge -->
+        <div class="header-badge" aria-label="මිල ශ්‍රී ලංකා රුපියල් වලින්">
+          <span class="currency-note">රු. LKR</span>
+        </div>
+
+      </div>
+
+      <!-- Hint text -->
+      <div class="header-info" role="note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <span>පහත සෙවීමෙන් ඔබට අවශ්‍ය භාණ්ඩය ඉක්මනින් සොයා ගත හැක</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       SEARCH BAR (sticky)
+  ═══════════════════════════════════════════ -->
+  <section class="search-section" aria-label="භාණ්ඩ සෙවීම">
+    <div class="search-wrapper">
+      <div class="search-box">
+        <!-- Search icon -->
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+
+        <!-- Search input -->
+        <input type="search" id="search-input" autocomplete="off" autocorrect="off" autocapitalize="off"
+          spellcheck="false" inputmode="search" enterkeyhint="search" placeholder="භාණ්ඩයක් සොයන්න..."
+          aria-label="භාණ්ඩ නාමය ඇතුළු කරන්න" aria-controls="product-grid" aria-describedby="result-count" />
+
+        <!-- Clear button -->
+        <button id="search-clear" type="button" aria-label="සෙවීම මකන්න" title="සෙවීම මකන්න">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+            stroke-linecap="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN CONTENT
+  ═══════════════════════════════════════════ -->
+  <main class="main-content" role="main">
+
+    <!-- Toolbar: sort + result count -->
+    <div class="toolbar" role="toolbar" aria-label="ගැලපුම් සහ වර්ගීකරණ">
+      <span id="result-count" aria-live="polite" aria-atomic="true"></span>
+
+      <div class="sort-group">
+        <label for="sort-select" class="sort-label">වර්ග කිරීම:</label>
+        <select id="sort-select" aria-label="වර්ගීකරණ ක්‍රමය">
+          <option value="name">නම අනුව</option>
+          <option value="price-asc">මිල — අඩු සිට</option>
+          <option value="price-desc">මිල — වැඩි සිට</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Category filter chips -->
+    <section class="category-section" aria-label="කාණ්ඩ ගැළපීම">
+      <div id="category-bar" role="group" aria-label="කාණ්ඩ"></div>
+    </section>
+
+    <!-- ── Loading Skeletons ── -->
+    <div id="skeleton-cards" aria-label="දත්ත පූරණය වෙමින්..." aria-busy="true">
+      <!-- 8 skeleton cards generated below -->
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-line skeleton-icon"></div>
+        <div class="skeleton-line skeleton-cat"></div>
+        <div class="skeleton-line skeleton-name"></div>
+        <div class="skeleton-line skeleton-name2"></div>
+        <div class="skeleton-line skeleton-price"></div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-line skeleton-icon"></div>
+        <div class="skeleton-line skeleton-cat"></div>
+        <div class="skeleton-line skeleton-name"></div>
+        <div class="skeleton-line skeleton-name2"></div>
+        <div class="skeleton-line skeleton-price"></div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-line skeleton-icon"></div>
+        <div class="skeleton-line skeleton-cat"></div>
+        <div class="skeleton-line skeleton-name"></div>
+        <div class="skeleton-line skeleton-name2"></div>
+        <div class="skeleton-line skeleton-price"></div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-line skeleton-icon"></div>
+        <div class="skeleton-line skeleton-cat"></div>
+        <div class="skeleton-line skeleton-name"></div>
+        <div class="skeleton-line skeleton-name2"></div>
+        <div class="skeleton-line skeleton-price"></div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-line skeleton-icon"></div>
+        <div class="skeleton-line skeleton-cat"></div>
+        <div class="skeleton-line skeleton-name"></div>
+        <div class="skeleton-line skeleton-name2"></div>
+        <div class="skeleton-line skeleton-price"></div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-line skeleton-icon"></div>
+        <div class="skeleton-line skeleton-cat"></div>
+        <div class="skeleton-line skeleton-name"></div>
+        <div class="skeleton-line skeleton-name2"></div>
+        <div class="skeleton-line skeleton-price"></div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-line skeleton-icon"></div>
+        <div class="skeleton-line skeleton-cat"></div>
+        <div class="skeleton-line skeleton-name"></div>
+        <div class="skeleton-line skeleton-name2"></div>
+        <div class="skeleton-line skeleton-price"></div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-line skeleton-icon"></div>
+        <div class="skeleton-line skeleton-cat"></div>
+        <div class="skeleton-line skeleton-name"></div>
+        <div class="skeleton-line skeleton-name2"></div>
+        <div class="skeleton-line skeleton-price"></div>
+      </div>
+    </div>
+
+    <!-- ── Error State ── -->
+    <div id="error-state" role="alert" aria-live="assertive">
+      <div class="error-icon" aria-hidden="true">⚠️</div>
+      <p id="error-msg">දත්ත ලබාගැනීමට නොහැකි විය.</p>
+      <button id="retry-btn" class="btn-retry" type="button">නැවත උත්සාහ කරන්න</button>
+    </div>
+
+    <!-- ── Empty State ── -->
+    <div id="empty-state" aria-live="polite">
+      <div class="empty-icon" aria-hidden="true">🔍</div>
+      <p id="empty-msg">භාණ්ඩ හමු නොවීය.</p>
+    </div>
+
+    <!-- ── Product Grid ── -->
+    <div id="product-grid" role="list" aria-label="භාණ්ඩ ලැයිස්තුව" aria-live="polite"></div>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER BAR
+  ═══════════════════════════════════════════ -->
+  <footer class="footer-bar" role="contentinfo">
+    <span id="last-updated" aria-label="අවසන් යාවත්කාලීනය"></span>
+    <button id="refresh-btn" type="button" aria-label="නවතම මිල ගණන් ලබාගන්න">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="23 4 23 10 17 10" />
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+      </svg>
+      නැවත ලබාගන්න
+    </button>
+  </footer>
+
+  <!-- Back to top -->
+  <button id="back-to-top" type="button" aria-label="ඉහළට යන්න" title="ඉහළට යන්න">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="18 15 12 9 6 15" />
+    </svg>
+  </button>
+
+  <!-- ═══════════════════════════════════════════
+       SCRIPTS (order matters)
+  ═══════════════════════════════════════════ -->
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+
+</html>
