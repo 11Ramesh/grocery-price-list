@@ -21,7 +21,7 @@ const CONFIG = {
 
   // ─── Admin Apps Script Web App API ────────────────────────────────────────
   // Paste your Google Apps Script Web App URL here after deploying:
-  ADMIN_API_URL: "https://script.google.com/macros/s/AKfycbxonM1FO04uE5PmSJsQ0GAF91iHILx7LNzruIOKtZl5ialqGC2UsBox63SmjF3-PZLdxw/exec",
+  ADMIN_API_URL: "https://script.google.com/macros/s/AKfycbyHOV-yNHJhOyqw8qO9VarbTUyZzoEHsJzZSNNZ7ydUt5SfDavVod3ZBXJFV-aSIi4Hjg/exec",
 
   // ─── Column Mapping ───────────────────────────────────────────────────────
   // Exact column header names from your Google Sheet (case-sensitive).
