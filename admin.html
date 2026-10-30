@@ -435,6 +435,79 @@
       background: #fecaca;
     }
 
+    /* ── Status Toggle Badge & Styles ── */
+    .status-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 11px;
+      border-radius: var(--radius-full);
+      font-size: 0.76rem;
+      font-weight: 700;
+      border: 1.5px solid;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .status-active {
+      background: #e8f5e9;
+      color: #1b5e20;
+      border-color: #81c784;
+    }
+    .status-active:hover {
+      background: #c8e6c9;
+    }
+    .status-inactive {
+      background: #f3f4f6;
+      color: #6b7280;
+      border-color: #d1d5db;
+    }
+    .status-inactive:hover {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .item-row.inactive-row {
+      background: #fafafa;
+      opacity: 0.72;
+    }
+    .item-row.inactive-row:hover {
+      opacity: 1;
+      background: #f4f4f5;
+    }
+    .status-badge-hidden {
+      display: inline-block;
+      font-size: 0.70rem;
+      font-weight: 700;
+      color: #dc2626;
+      background: #fee2e2;
+      padding: 1px 6px;
+      border-radius: var(--radius-sm);
+      margin-left: 6px;
+    }
+
+    /* Status Filter Chips */
+    .status-filter-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .status-chip {
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.76rem;
+      font-weight: 700;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .status-chip.active {
+      background: var(--green-700);
+      color: var(--white);
+      border-color: var(--green-700);
+    }
+
     /* ── Notice Alert ── */
     .config-alert {
       background: #fef3c7;
@@ -596,7 +669,14 @@
       <!-- Item Management Table -->
       <div class="table-container">
         <div class="table-header-bar">
-          <h3>භාණ්ඩ ලැයිස්තුව හා මිල වෙනස් කිරීම</h3>
+          <div>
+            <h3>භාණ්ඩ ලැයිස්තුව හා තත්ත්වය</h3>
+            <div class="status-filter-group" style="margin-top: 6px;">
+              <button type="button" class="status-chip active" data-filter="all">සියල්ල (<span id="count-all">0</span>)</button>
+              <button type="button" class="status-chip" data-filter="active">🟢 සක්‍රිය (<span id="count-active">0</span>)</button>
+              <button type="button" class="status-chip" data-filter="inactive">⚪ අක්‍රිය (<span id="count-inactive">0</span>)</button>
+            </div>
+          </div>
           <input type="search" id="admin-search" class="admin-search-input" placeholder="භාණ්ඩයක් සොයන්න...">
         </div>
 
@@ -617,6 +697,7 @@
     // ─── Admin Controller Logic ────────────────────────────────────────────────
     let currentAdminPassword = "";
     let adminProducts = [];
+    let currentStatusFilter = "all";
 
     const els = {
       loginSection: document.getElementById("login-section"),
@@ -631,7 +712,10 @@
       statCats: document.getElementById("stat-total-cats"),
       addForm: document.getElementById("add-product-form"),
       itemsList: document.getElementById("admin-items-list"),
-      adminSearch: document.getElementById("admin-search")
+      adminSearch: document.getElementById("admin-search"),
+      countAll: document.getElementById("count-all"),
+      countActive: document.getElementById("count-active"),
+      countInactive: document.getElementById("count-inactive")
     };
 
     // Check Config
@@ -710,17 +794,25 @@
       els.itemsList.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--gray-500);">Google Sheet වෙතින් දත්ත ලබාගනිමින් පවතී...</div>';
       try {
         adminProducts = await DataService.fetchProducts(true);
-        renderAdminItems(adminProducts);
         updateStats();
+        filterAndDisplayAdminItems();
       } catch (err) {
         els.itemsList.innerHTML = `<div style="padding: 30px; text-align: center; color: red;">දත්ත ලබාගැනීමට නොහැකි විය: ${err.message}</div>`;
       }
     }
 
     function updateStats() {
-      els.statItems.textContent = adminProducts.length;
+      const total = adminProducts.length;
+      const activeCount = adminProducts.filter(p => p.status !== "Inactive").length;
+      const inactiveCount = total - activeCount;
+
+      els.statItems.textContent = total;
       const cats = new Set(adminProducts.map(p => p.category).filter(Boolean));
       els.statCats.textContent = cats.size;
+
+      if (els.countAll) els.countAll.textContent = total;
+      if (els.countActive) els.countActive.textContent = activeCount;
+      if (els.countInactive) els.countInactive.textContent = inactiveCount;
     }
 
     // Render Items
@@ -732,14 +824,27 @@
 
       els.itemsList.innerHTML = "";
       products.forEach(p => {
+        const isActive = p.status !== "Inactive";
         const row = document.createElement("div");
-        row.className = "item-row";
+        row.className = `item-row ${isActive ? '' : 'inactive-row'}`;
         row.innerHTML = `
           <div class="item-info">
-            <div class="item-name">${escapeHtml(p.name)}</div>
+            <div class="item-name">
+              ${escapeHtml(p.name)}
+              ${isActive ? '' : '<span class="status-badge-hidden">සැඟවී ඇත (Hidden)</span>'}
+            </div>
             <div class="item-meta">කාණ්ඩය: ${escapeHtml(p.category)} | ඒකකය: ${escapeHtml(p.unit || "-")}</div>
           </div>
           <div class="price-edit-box">
+            <!-- Active / Inactive Status Toggle Button -->
+            <button class="status-toggle-btn ${isActive ? 'status-active' : 'status-inactive'}" 
+                    data-name="${escapeHtml(p.name)}" 
+                    data-current="${isActive ? 'Active' : 'Inactive'}" 
+                    title="${isActive ? 'ක්ලික් කර අක්‍රිය කරන්න (වෙබ් අඩවියෙන් සඟවන්න)' : 'ක්ලික් කර සක්‍රිය කරන්න (වෙබ් අඩවියේ පෙන්වන්න)'}">
+              ${isActive ? '🟢 සක්‍රියයි' : '⚪ අක්‍රියයි'}
+            </button>
+
+            <!-- Price input & Save -->
             <span class="price-prefix">රු.</span>
             <input type="text" inputmode="decimal" class="price-input" value="${p.price !== null ? p.price : (p.priceRaw || '')}" data-name="${escapeHtml(p.name)}" placeholder="නැත">
             <button class="btn-save-price" data-name="${escapeHtml(p.name)}">සුරකින්න</button>
@@ -747,6 +852,38 @@
           </div>
         `;
         els.itemsList.appendChild(row);
+      });
+
+      // Bind Status Toggle Buttons
+      document.querySelectorAll(".status-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const name = btn.dataset.name;
+          const current = btn.dataset.current;
+          const nextStatus = current === "Active" ? "Inactive" : "Active";
+
+          btn.disabled = true;
+          btn.textContent = "වෙනස් කරමින්...";
+
+          const res = await callAdminAPI({
+            action: "updateStatus",
+            name: name,
+            status: nextStatus,
+            password: currentAdminPassword
+          });
+
+          if (res.success) {
+            // Update local state
+            const target = adminProducts.find(p => p.name === name);
+            if (target) target.status = nextStatus;
+
+            DataService.clearCache();
+            updateStats();
+            filterAndDisplayAdminItems();
+          } else {
+            alert("අසාර්ථකයි: " + res.message);
+            btn.disabled = false;
+          }
+        });
       });
 
       // Bind Price Save Buttons
@@ -769,6 +906,11 @@
           if (res.success) {
             const displayMsg = newPrice ? `රු. ${newPrice}` : 'මිල නොමැත (හිස්)';
             alert(`✓ "${name}" මිල ${displayMsg} ලෙස යාවත්කාලීන විය!`);
+            const target = adminProducts.find(p => p.name === name);
+            if (target) {
+              target.price = newPrice ? parseFloat(newPrice) : null;
+              target.priceRaw = newPrice;
+            }
             DataService.clearCache();
           } else {
             alert("අසාර්ථකයි: " + res.message);
@@ -803,19 +945,41 @@
       });
     }
 
-    // Search Filter
-    els.adminSearch.addEventListener("input", () => {
-      const q = els.adminSearch.value.trim().toLowerCase();
-      if (!q) {
-        renderAdminItems(adminProducts);
-        return;
+    // Filter and Display Items based on Search & Status Filter
+    function filterAndDisplayAdminItems() {
+      const q = (els.adminSearch.value || "").trim().toLowerCase();
+      let list = adminProducts;
+
+      // Status filter
+      if (currentStatusFilter === "active") {
+        list = list.filter(p => p.status !== "Inactive");
+      } else if (currentStatusFilter === "inactive") {
+        list = list.filter(p => p.status === "Inactive");
       }
-      const filtered = adminProducts.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
-      );
-      renderAdminItems(filtered);
+
+      // Search filter
+      if (q) {
+        list = list.filter(p =>
+          p.name.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q)
+        );
+      }
+
+      renderAdminItems(list);
+    }
+
+    // Status Filter Chip Clicks
+    document.querySelectorAll(".status-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll(".status-chip").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        currentStatusFilter = chip.dataset.filter;
+        filterAndDisplayAdminItems();
+      });
     });
+
+    // Search Input
+    els.adminSearch.addEventListener("input", filterAndDisplayAdminItems);
 
     // Add Product Form
     els.addForm.addEventListener("submit", async (e) => {

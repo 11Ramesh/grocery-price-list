@@ -86,11 +86,12 @@ const DataService = (() => {
       category: headers.findIndex(h => h.trim() === col.category),
       price:    headers.findIndex(h => h.trim() === col.price),
       unit:     headers.findIndex(h => h.trim() === col.unit),
+      status:   headers.findIndex(h => h.trim() === col.status || h.trim().toLowerCase() === "status" || h.trim().toLowerCase() === "active"),
     };
 
     // Warn in console if columns not found
     Object.entries(idx).forEach(([key, i]) => {
-      if (i === -1) console.warn(`[DataService] Column not found: "${col[key]}" (key: ${key})`);
+      if (i === -1 && key !== 'status') console.warn(`[DataService] Column not found: "${col[key]}" (key: ${key})`);
     });
 
     const seen = new Set();
@@ -106,9 +107,14 @@ const DataService = (() => {
       const category = idx.category >= 0 ? (row[idx.category] || "").trim() : "";
       const priceRaw = idx.price    >= 0 ? (row[idx.price]    || "").trim() : "";
       const unit     = idx.unit     >= 0 ? (row[idx.unit]     || "").trim() : "";
+      const statusRaw = idx.status  >= 0 ? (row[idx.status]   || "").trim() : "Active";
 
       // Skip rows with no product name
       if (!name) continue;
+
+      // Check Active vs Inactive status (default is Active)
+      const isInactive = /^(inactive|hide|hidden|අක්‍රිය|අක්‍රියයි|no|false|0)$/i.test(statusRaw);
+      const status = isInactive ? "Inactive" : "Active";
 
       // Deduplicate by name+category
       const key = `${name}|${category}`.toLowerCase();
@@ -134,6 +140,7 @@ const DataService = (() => {
         priceDisplay,
         priceRaw,
         unit,
+        status, // "Active" | "Inactive"
         // Searchable blob (lowercase for fast matching)
         _search: `${name} ${category} ${unit}`.toLowerCase(),
       });

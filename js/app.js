@@ -76,7 +76,9 @@ const App = (() => {
     hideEmptyState();
 
     try {
-      allProducts = await DataService.fetchProducts(forceRefresh);
+      const rawProducts = await DataService.fetchProducts(forceRefresh);
+      // Filter out inactive/deactivated products so customers ONLY see active products!
+      allProducts = rawProducts.filter(p => p.status !== "Inactive");
       renderCategories();
       applyFilters();
       showLastUpdated();

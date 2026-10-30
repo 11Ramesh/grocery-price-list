@@ -30,6 +30,7 @@ const CONFIG = {
     category: "කාණ්ඩය",       // Category
     price: "මිල (රු.)",     // Price in rupees
     unit: "ඒකකය",         // Unit (e.g. kg, g, L)
+    status: "තත්ත්වය",     // Status: Active / Inactive (සක්‍රිය / අක්‍රිය)
   },
 
   // ─── Display Options ──────────────────────────────────────────────────────

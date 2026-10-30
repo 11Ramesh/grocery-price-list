@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * GOOGLE APPS SCRIPT CODE — කුරුදුවත්ත කඩේ ADMIN API & REAL-TIME DATA
+ * GOOGLE APPS SCRIPT CODE — කුරුදුවත්ත කඩේ ADMIN API & ACTIVE/INACTIVE STATUS
  * ============================================================================
  * 
  * 1. මෙම සම්පූර්ණ Code එක Copy කරගන්න.
@@ -10,7 +10,7 @@
  * ============================================================================
  */
 
-// 🔒 ඔබගේ ආරක්ෂිත Strong Password එක (මෙතනින් වෙනස් කරගත හැක):
+// 🔒 ඔබගේ ආරක්ෂිත Strong Password එක:
 const ADMIN_PASSWORD = "Kuru@Shop#2026";
 
 function doGet(e) {
@@ -27,6 +27,13 @@ function handleRequest(e) {
 
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    // Auto-create Header for Column E if missing
+    const headerRow = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 5)).getValues()[0];
+    if (!headerRow[4] || headerRow[4].toString().trim() === "") {
+      sheet.getRange(1, 5).setValue("තත්ත්වය");
+    }
+
     let data = {};
 
     if (e && e.postData && e.postData.contents) {
@@ -41,7 +48,7 @@ function handleRequest(e) {
 
     const action = data.action || "";
 
-    // 0. Public Action: REAL-TIME Instant Products Fetch (No Cache Delay!)
+    // 0. Public Action: REAL-TIME Instant Products Fetch
     if (action === "getProducts") {
       const values = sheet.getDataRange().getValues();
       const products = [];
@@ -53,6 +60,10 @@ function handleRequest(e) {
           const category = row[1] ? row[1].toString().trim() : "වෙනත්";
           const priceRaw = (row[2] !== undefined && row[2] !== null) ? row[2].toString().trim() : "";
           const unit = row[3] ? row[3].toString().trim() : "";
+          const statusRaw = (row[4] !== undefined && row[4] !== null) ? row[4].toString().trim() : "Active";
+
+          const isInactive = /^(inactive|hide|hidden|අක්‍රිය|අක්‍රියයි|no|false|0)$/i.test(statusRaw);
+          const status = isInactive ? "Inactive" : "Active";
 
           let price = null;
           let priceDisplay = null;
@@ -72,6 +83,7 @@ function handleRequest(e) {
             priceDisplay: priceDisplay,
             priceRaw: priceRaw,
             unit: unit,
+            status: status,
             _search: (name + " " + category + " " + unit).toLowerCase()
           });
         }
@@ -90,18 +102,19 @@ function handleRequest(e) {
       return responseJSON({ success: true, message: "Login සාර්ථකයි!" });
     }
 
-    // 2. Add New Product (Allows empty price)
+    // 2. Add New Product (with default status: Active)
     if (action === "addProduct") {
       const name = (data.name || "").trim();
       const category = (data.category || "").trim();
       const price = (data.price !== undefined && data.price !== null) ? data.price.toString().trim() : "";
       const unit = (data.unit || "").trim();
+      const status = (data.status || "Active").trim();
 
       if (!name) {
         return responseJSON({ success: false, message: "භාණ්ඩයේ නම ඇතුළත් කරන්න." });
       }
 
-      sheet.appendRow([name, category, price, unit]);
+      sheet.appendRow([name, category, price, unit, status]);
       return responseJSON({ success: true, message: `"${name}" සාර්ථකව ඇතුළත් කරන ලදී!` });
     }
 
@@ -128,7 +141,31 @@ function handleRequest(e) {
       return responseJSON({ success: true, message: `මිල සාර්ථකව යාවත්කාලීන විය (${displayMsg})!` });
     }
 
-    // 4. Delete Product
+    // 4. Update Product Status (Active / Inactive)
+    if (action === "updateStatus") {
+      const name = (data.name || "").trim();
+      const newStatus = (data.status || "Active").trim();
+      const values = sheet.getDataRange().getValues();
+
+      let foundRow = -1;
+      for (let i = 1; i < values.length; i++) {
+        if (values[i][0].toString().trim().toLowerCase() === name.toLowerCase()) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+
+      if (foundRow === -1) {
+        return responseJSON({ success: false, message: "භාණ්ඩය හමු නොවීය." });
+      }
+
+      // Column 5 is Column E (තත්ත්වය)
+      sheet.getRange(foundRow, 5).setValue(newStatus);
+      const statusSi = newStatus === "Active" ? "සක්‍රිය කරන ලදී (පාරිභෝගිකයින්ට පෙනේ)" : "අක්‍රිය කරන ලදී (පාරිභෝගිකයින්ට නොපෙනේ)";
+      return responseJSON({ success: true, message: `"${name}" ${statusSi}` });
+    }
+
+    // 5. Delete Product
     if (action === "deleteProduct") {
       const name = (data.name || "").trim();
       const values = sheet.getDataRange().getValues();
