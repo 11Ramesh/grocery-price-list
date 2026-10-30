@@ -638,23 +638,20 @@
       els.btnLogin.textContent = "පරීක්ෂා කරමින් පවතී...";
 
       try {
-        // If API URL is set, verify with Google Apps Script
-        if (CONFIG.ADMIN_API_URL) {
-          const res = await callAdminAPI({ action: "verifyLogin", password: pass });
-          if (!res.success) {
-            alert(res.message || "මුරපදය වැරදියි!");
-            els.btnLogin.disabled = false;
-            els.btnLogin.textContent = "Login වන්න ➔";
-            return;
-          }
-        } else {
-          // Fallback default password if API not connected yet
-          if (pass !== "1234") {
-            alert("මුරපදය වැරදියි! (Default Password: 1234)");
-            els.btnLogin.disabled = false;
-            els.btnLogin.textContent = "Login වන්න ➔";
-            return;
-          }
+        if (!CONFIG.ADMIN_API_URL) {
+          alert("Google Apps Script URL එක සකසා නොමැත. කරුණාකර js/config.js පරීක්ෂා කරන්න.");
+          els.btnLogin.disabled = false;
+          els.btnLogin.textContent = "Login වන්න ➔";
+          return;
+        }
+
+        // 100% Secure: Password is ONLY verified on Google Cloud Server (Never exposed in UI)
+        const res = await callAdminAPI({ action: "verifyLogin", password: pass });
+        if (!res.success) {
+          alert(res.message || "මුරපදය වැරදියි!");
+          els.btnLogin.disabled = false;
+          els.btnLogin.textContent = "Login වන්න ➔";
+          return;
         }
 
         currentAdminPassword = pass;

@@ -1,25 +1,17 @@
 /**
  * ============================================================================
- * GOOGLE APPS SCRIPT CODE — කුරුදුවත්ත කඩේ ADMIN API
+ * GOOGLE APPS SCRIPT CODE — කුරුදුවත්ත කඩේ ADMIN API & REAL-TIME DATA
  * ============================================================================
  * 
- * මෙම Code එක ඔබේ Google Sheet එකට දමන ආකාරය:
- * 1. ඔබේ Google Sheet එක Open කරගන්න (https://docs.google.com/spreadsheets/d/1eJN3hYCtFBfNOME2rtfoKUCrerhSw0ZhQgJCMOFqAcE/edit)
- * 2. උඩ මෙනුවේ ඇති "Extensions" ➔ "Apps Script" ක්ලික් කරන්න.
- * 3. එහි ඇති පරණ Code සියල්ල මකා (Delete කර), පහත ඇති සම්පූර්ණ Code එක Paste කරන්න.
- * 4. උඩින් ඇති "Save" (💾) අයිකනය ඔබන්න.
- * 5. දකුණු පැත්තේ උඩ ඇති නිල් පාට "Deploy" ➔ "New deployment" ක්ලික් කරන්න.
- *    - Select type: "Web app" (⚙️ අයිකනයෙන්)
- *    - Description: "Admin API"
- *    - Execute as: "Me" (ඔබගේ ඊමේල් ලිපිනය)
- *    - Who has access: "Anyone" (ඉතා වැදගත්!)
- * 6. "Deploy" ඔබන්න. (Permissions ඉල්ලුවහොත් "Authorize access" ➔ Advanced ➔ Go to ... (unsafe) ➔ Allow කරන්න).
- * 7. අවසානයේ ලැබෙන "Web app URL" එක Copy කරගෙන `js/config.js` එකේ `ADMIN_API_URL` එකට ලබාදෙන්න!
+ * 1. මෙම සම්පූර්ණ Code එක Copy කරගන්න.
+ * 2. Google Sheet එකේ Extensions ➔ Apps Script ගොස් පරණ Code එක මකා මෙය Paste කරන්න.
+ * 3. Save (💾) ඔබන්න.
+ * 4. උඩ දකුණු පැත්තේ Deploy ➔ Manage deployments ➔ Edit (✏️) ➔ Version: "New version" ➔ Deploy ඔබන්න.
  * ============================================================================
  */
 
-// ඔබේ කැමැත්ත අනුව මෙතනින් Admin Password එක වෙනස් කරගත හැක (Default: 1234)
-const ADMIN_PASSWORD = "1234";
+// 🔒 ඔබගේ ආරක්ෂිත Strong Password එක (මෙතනින් වෙනස් කරගත හැක):
+const ADMIN_PASSWORD = "Kuru@Shop#2026";
 
 function doGet(e) {
   return handleRequest(e);
@@ -37,20 +29,58 @@ function handleRequest(e) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     let data = {};
 
-    if (e.postData && e.postData.contents) {
+    if (e && e.postData && e.postData.contents) {
       try {
         data = JSON.parse(e.postData.contents);
       } catch (err) {
-        data = e.parameter;
+        data = e.parameter || {};
       }
-    } else {
+    } else if (e && e.parameter) {
       data = e.parameter;
     }
 
-    const action = data.action;
-    const password = data.password;
+    const action = data.action || "";
 
-    // Check Password
+    // 0. Public Action: REAL-TIME Instant Products Fetch (No Cache Delay!)
+    if (action === "getProducts") {
+      const values = sheet.getDataRange().getValues();
+      const products = [];
+      if (values.length > 1) {
+        for (let r = 1; r < values.length; r++) {
+          const row = values[r];
+          const name = row[0] ? row[0].toString().trim() : "";
+          if (!name) continue;
+          const category = row[1] ? row[1].toString().trim() : "වෙනත්";
+          const priceRaw = (row[2] !== undefined && row[2] !== null) ? row[2].toString().trim() : "";
+          const unit = row[3] ? row[3].toString().trim() : "";
+
+          let price = null;
+          let priceDisplay = null;
+          if (priceRaw !== "") {
+            const num = parseFloat(priceRaw.replace(/[^\d.]/g, ""));
+            if (!isNaN(num) && num >= 0) {
+              price = num;
+              priceDisplay = num.toLocaleString("si-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+          }
+
+          products.push({
+            id: "p-" + r,
+            name: name,
+            category: category,
+            price: price,
+            priceDisplay: priceDisplay,
+            priceRaw: priceRaw,
+            unit: unit,
+            _search: (name + " " + category + " " + unit).toLowerCase()
+          });
+        }
+      }
+      return responseJSON({ success: true, products: products });
+    }
+
+    // ─── ADMIN ACTIONS (Password Required) ───
+    const password = data.password || "";
     if (password !== ADMIN_PASSWORD) {
       return responseJSON({ success: false, message: "මුරපදය වැරදියි! (Incorrect Password)" });
     }
@@ -60,11 +90,11 @@ function handleRequest(e) {
       return responseJSON({ success: true, message: "Login සාර්ථකයි!" });
     }
 
-    // 2. Add New Product
+    // 2. Add New Product (Allows empty price)
     if (action === "addProduct") {
       const name = (data.name || "").trim();
       const category = (data.category || "").trim();
-      const price = (data.price || "").trim();
+      const price = (data.price !== undefined && data.price !== null) ? data.price.toString().trim() : "";
       const unit = (data.unit || "").trim();
 
       if (!name) {
@@ -75,16 +105,16 @@ function handleRequest(e) {
       return responseJSON({ success: true, message: `"${name}" සාර්ථකව ඇතුළත් කරන ලදී!` });
     }
 
-    // 3. Update Existing Product Price / Details
+    // 3. Update Existing Product Price
     if (action === "updatePrice") {
       const name = (data.name || "").trim();
-      const newPrice = (data.price || "").trim();
+      const newPrice = (data.price !== undefined && data.price !== null) ? data.price.toString().trim() : "";
       const values = sheet.getDataRange().getValues();
 
       let foundRow = -1;
       for (let i = 1; i < values.length; i++) {
         if (values[i][0].toString().trim().toLowerCase() === name.toLowerCase()) {
-          foundRow = i + 1; // 1-based index
+          foundRow = i + 1;
           break;
         }
       }
@@ -93,9 +123,9 @@ function handleRequest(e) {
         return responseJSON({ success: false, message: "භාණ්ඩය හමු නොවීය." });
       }
 
-      // Update Column C (Price)
       sheet.getRange(foundRow, 3).setValue(newPrice);
-      return responseJSON({ success: true, message: `මිල සාර්ථකව යාවත්කාලීන විය (රු. ${newPrice})!` });
+      const displayMsg = newPrice ? `රු. ${newPrice}` : "මිල හිස් කරන ලදී";
+      return responseJSON({ success: true, message: `මිල සාර්ථකව යාවත්කාලීන විය (${displayMsg})!` });
     }
 
     // 4. Delete Product
@@ -132,4 +162,3 @@ function responseJSON(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
-

@@ -149,38 +149,43 @@ const DataService = (() => {
    */
   async function fetchProducts(forceRefresh = false) {
     const now = Date.now();
-    const cacheMs = CONFIG.cacheMinutes * 60 * 1000;
+    // Use short 30-second cache or instant refresh
+    const cacheMs = 30 * 1000;
 
-    // Return from memory cache if fresh
+    // Return from memory cache if fresh and not force-refreshing
     if (!forceRefresh && _cachedProducts && _cachedAt && (now - _cachedAt) < cacheMs) {
       return _cachedProducts;
     }
 
-    // Try sessionStorage
-    if (!forceRefresh) {
+    let products = null;
+
+    // 1. Try Real-Time Apps Script API first (0-delay Instant Live Data)
+    if (CONFIG.ADMIN_API_URL) {
       try {
-        const stored = sessionStorage.getItem("grocery_cache");
-        const storedAt = parseInt(sessionStorage.getItem("grocery_cache_at") || "0", 10);
-        if (stored && (now - storedAt) < cacheMs) {
-          _cachedProducts = JSON.parse(stored);
-          _cachedAt = storedAt;
-          return _cachedProducts;
+        const liveUrl = CONFIG.ADMIN_API_URL + (CONFIG.ADMIN_API_URL.includes("?") ? "&" : "?") + "action=getProducts&_t=" + now;
+        const res = await fetch(liveUrl);
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.success && Array.isArray(json.products)) {
+            products = json.products;
+          }
         }
-      } catch (_) { /* sessionStorage unavailable */ }
+      } catch (err) {
+        console.warn("[DataService] Real-time API fetch failed, falling back to CSV:", err);
+      }
     }
 
-    // Fetch from Google Sheets
-    // NOTE: Do NOT add custom headers (e.g. cache: "no-cache") — they trigger
-    // a CORS preflight OPTIONS request that Google Sheets does not support.
-    const cacheBust = `&_cb=${Date.now()}`;
-    const response = await fetch(CONFIG.CSV_URL + cacheBust);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    // 2. Fallback to published CSV
+    if (!products) {
+      const cacheBust = `&_cb=${now}`;
+      const response = await fetch(CONFIG.CSV_URL + cacheBust);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const text = await response.text();
+      const rows = parseCSV(text);
+      products = rowsToProducts(rows);
     }
-
-    const text = await response.text();
-    const rows = parseCSV(text);
-    const products = rowsToProducts(rows);
 
     // Store in memory and sessionStorage
     _cachedProducts = products;
