@@ -52,6 +52,18 @@ const App = (() => {
     document.title = `${CONFIG.shopNameEn} — මිල දර්ශනය`;
     if (els.shopName)    els.shopName.textContent    = CONFIG.shopName;
     if (els.shopSubtitle) els.shopSubtitle.textContent = CONFIG.shopSubtitle;
+
+    if (CONFIG.shopPhone) {
+      const phoneDisplay = document.getElementById("shop-phone-display");
+      const callBtn = document.getElementById("shop-call-btn");
+      const waBtn = document.getElementById("shop-whatsapp-btn");
+      if (phoneDisplay) phoneDisplay.textContent = CONFIG.shopPhone;
+      if (callBtn) callBtn.href = `tel:${CONFIG.shopPhone}`;
+      if (waBtn) {
+        const cleanNumber = CONFIG.shopPhone.replace(/^0/, "94");
+        waBtn.href = `https://wa.me/${cleanNumber}?text=${encodeURIComponent("සුබ දවසක්! භාණ්ඩ පිළිබඳව විස්තර දැන ගැනීමට අවශ්‍යයි.")}`;
+      }
+    }
   }
 
   // ─── Data Loading ──────────────────────────────────────────────────────────

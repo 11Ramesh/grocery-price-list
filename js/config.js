@@ -12,6 +12,7 @@ const CONFIG = {
   shopNameEn: "Kurudhuwatta Shop",       // Shop name in English (for <title> tag)
   shopSubtitle: "අද දවසේ භාණ්ඩ මිල දර්ශනය",  // Header subtitle
   shopTagline: "නැවුම් | ගුණාත්මක | දැරිය හැකි", // Optional tagline
+  shopPhone: "0773441275",              // Shop contact number
 
   // ─── Data Source ──────────────────────────────────────────────────────────
   // The published Google Sheets CSV URL.
