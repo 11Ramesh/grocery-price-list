@@ -19,6 +19,10 @@ const CONFIG = {
   // To update: File → Share → Publish to web → CSV → copy URL → paste here.
   CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRjdEBDxL3kb1YmEQnyY-hHTCZGJKw86-EidYjSn1_K9rOnNM_DyPomBK5iDKELyYXB0hzRPEeTf8IZ/pub?output=csv&gid=0",
 
+  // ─── Admin Apps Script Web App API ────────────────────────────────────────
+  // Paste your Google Apps Script Web App URL here after deploying:
+  ADMIN_API_URL: "https://script.google.com/macros/s/AKfycbyjy3E88k90FU0SBYbuuxXLrwmweitHLrAn6NqyvR149FcNVj1tfbfwT7l9nMDrrb6I/exec",
+
   // ─── Column Mapping ───────────────────────────────────────────────────────
   // Exact column header names from your Google Sheet (case-sensitive).
   columns: {

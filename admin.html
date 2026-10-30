@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="si" dir="ltr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>කළමනාකරණ පද්ධතිය (Admin Portal) — කුරුදුවත්ත කඩේ</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ── Admin Specific Styles ── */
+    .admin-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 16px 80px;
+    }
+
+    /* ── Login Card ── */
+    #login-section {
+      max-width: 420px;
+      margin: 60px auto 0;
+      background: #ffffff;
+      padding: 36px 28px;
+      border-radius: var(--radius-xl);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+      border: 1.5px solid rgba(46, 125, 79, 0.2);
+      text-align: center;
+    }
+
+    .login-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      color: var(--green-800);
+    }
+
+    .login-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--green-900);
+      margin-bottom: 6px;
+    }
+
+    .login-sub {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      transition: border-color var(--transition);
+      background: var(--white);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--green-600);
+      box-shadow: 0 0 0 3px rgba(46, 125, 79, 0.15);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--green-800), var(--green-600));
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-full);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(46, 125, 79, 0.3);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(46, 125, 79, 0.4);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Dashboard Section ── */
+    #dashboard-section {
+      display: none;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 18px 22px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .dash-shop-info h2 {
+      font-size: 1.25rem;
+      color: var(--green-900);
+      font-weight: 800;
+    }
+
+    .dash-shop-info span {
+      font-size: 0.8rem;
+      color: var(--green-600);
+      font-weight: 700;
+      background: var(--green-50);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .dash-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-outline {
+      padding: 7px 14px;
+      border: 1.5px solid var(--gray-300);
+      background: transparent;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--gray-700);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all var(--transition);
+    }
+
+    .btn-outline:hover {
+      background: var(--gray-100);
+      border-color: var(--gray-500);
+    }
+
+    .btn-logout {
+      border-color: var(--red-500);
+      color: var(--red-500);
+    }
+
+    .btn-logout:hover {
+      background: var(--red-100);
+      border-color: var(--red-500);
+    }
+
+    /* ── Quick Stats ── */
+    .dash-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: var(--green-50);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: var(--green-700);
+    }
+
+    .stat-text h4 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1.1;
+    }
+
+    .stat-text p {
+      font-size: 0.78rem;
+      color: var(--gray-500);
+      font-weight: 600;
+    }
+
+    /* ── Add Product Card ── */
+    .action-banner {
+      background: linear-gradient(135deg, var(--green-900), var(--green-700));
+      color: #ffffff;
+      padding: 22px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .action-banner h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .add-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .add-input {
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--gray-900);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      width: 100%;
+    }
+
+    .add-input:focus {
+      outline: none;
+      background: #ffffff;
+      border-color: #ffffff;
+    }
+
+    .btn-add-item {
+      background: #ffffff;
+      color: var(--green-900);
+      border: none;
+      padding: 11px 24px;
+      border-radius: var(--radius-full);
+      font-weight: 800;
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: all var(--transition);
+    }
+
+    .btn-add-item:hover {
+      background: #f0fdf4;
+      transform: translateY(-1px);
+    }
+
+    /* ── Table / Item Management List ── */
+    .table-container {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+
+    .table-header-bar {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--gray-100);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .table-header-bar h3 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--gray-900);
+    }
+
+    .admin-search-input {
+      padding: 8px 14px;
+      border: 1.5px solid var(--gray-300);
+      border-radius: var(--radius-full);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      width: 220px;
+    }
+
+    .item-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--gray-100);
+      gap: 12px;
+      transition: background var(--transition);
+      flex-wrap: wrap;
+    }
+
+    .item-row:hover {
+      background: var(--green-50);
+    }
+
+    .item-row:last-child {
+      border-bottom: none;
+    }
+
+    .item-info {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .item-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--gray-900);
+    }
+
+    .item-meta {
+      font-size: 0.78rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .price-edit-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .price-prefix {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--green-800);
+    }
+
+    .price-input {
+      width: 90px;
+      padding: 6px 8px;
+      border: 1.5px solid var(--gray-300);
+      border-radius: var(--radius-sm);
+      font-size: 0.92rem;
+      font-weight: 700;
+      font-family: var(--font-body);
+      color: var(--green-900);
+      text-align: right;
+    }
+
+    .price-input:focus {
+      outline: none;
+      border-color: var(--green-600);
+    }
+
+    /* Hide number spinner up/down arrows */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none !important;
+      margin: 0 !important;
+    }
+    input[type=number] {
+      -moz-appearance: textfield !important;
+      appearance: textfield !important;
+    }
+
+    .btn-save-price {
+      background: var(--green-700);
+      color: #ffffff;
+      border: none;
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+
+    .btn-save-price:hover {
+      background: var(--green-900);
+    }
+
+    .btn-delete-item {
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+
+    .btn-delete-item:hover {
+      background: #fecaca;
+    }
+
+    /* ── Notice Alert ── */
+    .config-alert {
+      background: #fef3c7;
+      border: 1.5px solid #fde047;
+      color: #854d0e;
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Simple Navigation -->
+  <header class="site-header" role="banner" style="padding: 16px 20px;">
+    <div class="header-inner" style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 22px;">🔐</span>
+        <div>
+          <h1 style="font-size: 1.15rem; color: #fff;">කුරුදුවත්ත කඩේ — Admin Portal</h1>
+          <p style="font-size: 0.75rem; color: rgba(255,255,255,0.8);">භාණ්ඩ හා මිල ගණන් කළමනාකරණය</p>
+        </div>
+      </div>
+      <a href="index.html" class="btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.4);">
+        <span>👁️ වෙබ් අඩවියට යන්න</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="admin-wrapper">
+
+    <!-- Config Warning Alert if URL is not set yet -->
+    <div id="config-alert" class="config-alert">
+      ⚠️ <strong>Google Apps Script URL සකසා නොමැත:</strong> Google Sheet එකේ Script එක Deploy කර ලැබුණු Web App URL එක
+      <code>js/config.js</code> හි <code>ADMIN_API_URL</code> ලෙස ලබාදෙන්න.
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         1. LOGIN SECTION
+    ═══════════════════════════════════════════ -->
+    <div id="login-section">
+      <div class="login-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+      </div>
+      <h2 class="login-title">Admin Login</h2>
+      <p class="login-sub">කඩේ මිල ගණන් වෙනස් කිරීමට ඔබගේ රහස් මුරපදය (Password) ඇතුළත් කරන්න.</p>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="admin-pass" class="form-label">මුරපදය (Password / PIN)</label>
+          <input type="password" id="admin-pass" class="form-input" placeholder="මුරපදය ඇතුළත් කරන්න..." required
+            autofocus autocomplete="current-password">
+        </div>
+        <button type="submit" id="btn-login" class="btn-submit">
+          Login වන්න ➔
+        </button>
+      </form>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         2. DASHBOARD SECTION (Shown after login)
+    ═══════════════════════════════════════════ -->
+    <div id="dashboard-section">
+
+      <div class="dashboard-header">
+        <div class="dash-shop-info">
+          <h2>කුරුදුවත්ත කඩේ කළමනාකරණය</h2>
+          <span>● Live Google Sheet Connected</span>
+        </div>
+        <div class="dash-actions">
+          <button id="btn-refresh-data" class="btn-outline" title="නැවුම් දත්ත ලබාගන්න">
+            <span>🔄 Refresh</span>
+          </button>
+          <button id="btn-logout" class="btn-outline btn-logout" title="පද්ධතියෙන් ඉවත් වන්න">
+            <span>🚪 Logout</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="dash-stats">
+        <div class="stat-card">
+          <div class="stat-icon">📦</div>
+          <div class="stat-text">
+            <h4 id="stat-total-items">0</h4>
+            <p>මුළු භාණ්ඩ සංඛ්‍යාව</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🗂️</div>
+          <div class="stat-text">
+            <h4 id="stat-total-cats">0</h4>
+            <p>කාණ්ඩ ගණන</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Add Product Card -->
+      <div class="action-banner">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          අලුත් භාණ්ඩයක් ඇතුළත් කරන්න (Add Product)
+        </h3>
+        <form id="add-product-form">
+          <div class="add-form-grid">
+            <div>
+              <label style="font-size: 0.75rem; opacity: 0.9; margin-bottom: 4px; display: block;">භාණ්ඩයේ නම *</label>
+              <input type="text" id="new-item-name" class="add-input" placeholder="උදා: සුදු කැකුළු සහල්" required>
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; opacity: 0.9; margin-bottom: 4px; display: block;">කාණ්ඩය
+                (Category)</label>
+              <input type="text" id="new-item-cat" class="add-input" placeholder="උදා: සහල්, කුළුබඩු, ආදිය">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; opacity: 0.9; margin-bottom: 4px; display: block;">මිල (රු.) (හිස්ව තැබිය හැක)</label>
+              <input type="text" inputmode="decimal" id="new-item-price" class="add-input" placeholder="උදා: 220">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; opacity: 0.9; margin-bottom: 4px; display: block;">ඒකකය (Unit)</label>
+              <input type="text" id="new-item-unit" class="add-input" placeholder="උදා: කි.ග්රෑ. 1, 500g">
+            </div>
+          </div>
+          <button type="submit" id="btn-save-new" class="btn-add-item">
+            <span>➕ භාණ්ඩය එකතු කරන්න</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Item Management Table -->
+      <div class="table-container">
+        <div class="table-header-bar">
+          <h3>භාණ්ඩ ලැයිස්තුව හා මිල වෙනස් කිරීම</h3>
+          <input type="search" id="admin-search" class="admin-search-input" placeholder="භාණ්ඩයක් සොයන්න...">
+        </div>
+
+        <div id="admin-items-list" class="item-list">
+          <!-- Dynamically populated rows -->
+          <div style="padding: 30px; text-align: center; color: var(--gray-500);">පූරණය වෙමින් පවතී...</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/data-service.js"></script>
+  <script>
+    // ─── Admin Controller Logic ────────────────────────────────────────────────
+    let currentAdminPassword = "";
+    let adminProducts = [];
+
+    const els = {
+      loginSection: document.getElementById("login-section"),
+      dashboardSection: document.getElementById("dashboard-section"),
+      loginForm: document.getElementById("login-form"),
+      adminPass: document.getElementById("admin-pass"),
+      btnLogin: document.getElementById("btn-login"),
+      btnLogout: document.getElementById("btn-logout"),
+      btnRefresh: document.getElementById("btn-refresh-data"),
+      configAlert: document.getElementById("config-alert"),
+      statItems: document.getElementById("stat-total-items"),
+      statCats: document.getElementById("stat-total-cats"),
+      addForm: document.getElementById("add-product-form"),
+      itemsList: document.getElementById("admin-items-list"),
+      adminSearch: document.getElementById("admin-search")
+    };
+
+    // Check Config
+    if (!CONFIG.ADMIN_API_URL) {
+      els.configAlert.style.display = "block";
+    }
+
+    // Check existing session
+    const savedPass = sessionStorage.getItem("admin_auth_pass");
+    if (savedPass) {
+      currentAdminPassword = savedPass;
+      showDashboard();
+    }
+
+    // Login Form Submit
+    els.loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pass = els.adminPass.value.trim();
+      if (!pass) return;
+
+      els.btnLogin.disabled = true;
+      els.btnLogin.textContent = "පරීක්ෂා කරමින් පවතී...";
+
+      try {
+        // If API URL is set, verify with Google Apps Script
+        if (CONFIG.ADMIN_API_URL) {
+          const res = await callAdminAPI({ action: "verifyLogin", password: pass });
+          if (!res.success) {
+            alert(res.message || "මුරපදය වැරදියි!");
+            els.btnLogin.disabled = false;
+            els.btnLogin.textContent = "Login වන්න ➔";
+            return;
+          }
+        } else {
+          // Fallback default password if API not connected yet
+          if (pass !== "1234") {
+            alert("මුරපදය වැරදියි! (Default Password: 1234)");
+            els.btnLogin.disabled = false;
+            els.btnLogin.textContent = "Login වන්න ➔";
+            return;
+          }
+        }
+
+        currentAdminPassword = pass;
+        sessionStorage.setItem("admin_auth_pass", pass);
+        showDashboard();
+      } catch (err) {
+        alert("දෝෂයක් සිදුවිය: " + err.message);
+      } finally {
+        els.btnLogin.disabled = false;
+        els.btnLogin.textContent = "Login වන්න ➔";
+      }
+    });
+
+    // Logout
+    els.btnLogout.addEventListener("click", () => {
+      sessionStorage.removeItem("admin_auth_pass");
+      currentAdminPassword = "";
+      els.dashboardSection.style.display = "none";
+      els.loginSection.style.display = "block";
+      els.adminPass.value = "";
+    });
+
+    // Refresh Data
+    els.btnRefresh.addEventListener("click", () => {
+      DataService.clearCache();
+      loadAdminProducts();
+    });
+
+    // Show Dashboard
+    async function showDashboard() {
+      els.loginSection.style.display = "none";
+      els.dashboardSection.style.display = "block";
+      await loadAdminProducts();
+    }
+
+    // Load Products
+    async function loadAdminProducts() {
+      els.itemsList.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--gray-500);">Google Sheet වෙතින් දත්ත ලබාගනිමින් පවතී...</div>';
+      try {
+        adminProducts = await DataService.fetchProducts(true);
+        renderAdminItems(adminProducts);
+        updateStats();
+      } catch (err) {
+        els.itemsList.innerHTML = `<div style="padding: 30px; text-align: center; color: red;">දත්ත ලබාගැනීමට නොහැකි විය: ${err.message}</div>`;
+      }
+    }
+
+    function updateStats() {
+      els.statItems.textContent = adminProducts.length;
+      const cats = new Set(adminProducts.map(p => p.category).filter(Boolean));
+      els.statCats.textContent = cats.size;
+    }
+
+    // Render Items
+    function renderAdminItems(products) {
+      if (!products || products.length === 0) {
+        els.itemsList.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--gray-500);">භාණ්ඩ කිසිවක් හමු නොවීය.</div>';
+        return;
+      }
+
+      els.itemsList.innerHTML = "";
+      products.forEach(p => {
+        const row = document.createElement("div");
+        row.className = "item-row";
+        row.innerHTML = `
+          <div class="item-info">
+            <div class="item-name">${escapeHtml(p.name)}</div>
+            <div class="item-meta">කාණ්ඩය: ${escapeHtml(p.category)} | ඒකකය: ${escapeHtml(p.unit || "-")}</div>
+          </div>
+          <div class="price-edit-box">
+            <span class="price-prefix">රු.</span>
+            <input type="text" inputmode="decimal" class="price-input" value="${p.price !== null ? p.price : (p.priceRaw || '')}" data-name="${escapeHtml(p.name)}" placeholder="නැත">
+            <button class="btn-save-price" data-name="${escapeHtml(p.name)}">සුරකින්න</button>
+            <button class="btn-delete-item" data-name="${escapeHtml(p.name)}" title="භාණ්ඩය ඉවත් කරන්න">🗑️</button>
+          </div>
+        `;
+        els.itemsList.appendChild(row);
+      });
+
+      // Bind Price Save Buttons
+      document.querySelectorAll(".btn-save-price").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const name = btn.dataset.name;
+          const input = btn.parentElement.querySelector(".price-input");
+          const newPrice = input.value.trim();
+
+          btn.disabled = true;
+          btn.textContent = "...";
+
+          const res = await callAdminAPI({
+            action: "updatePrice",
+            name: name,
+            price: newPrice,
+            password: currentAdminPassword
+          });
+
+          if (res.success) {
+            const displayMsg = newPrice ? `රු. ${newPrice}` : 'මිල නොමැත (හිස්)';
+            alert(`✓ "${name}" මිල ${displayMsg} ලෙස යාවත්කාලීන විය!`);
+            DataService.clearCache();
+          } else {
+            alert("අසාර්ථකයි: " + res.message);
+          }
+          btn.disabled = false;
+          btn.textContent = "සුරකින්න";
+        });
+      });
+
+      // Bind Delete Buttons
+      document.querySelectorAll(".btn-delete-item").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const name = btn.dataset.name;
+          if (!confirm(`ඔබට ඇත්තටම "${name}" භාණ්ඩය ඉවත් කිරීමට අවශ්‍යද?`)) return;
+
+          btn.disabled = true;
+          const res = await callAdminAPI({
+            action: "deleteProduct",
+            name: name,
+            password: currentAdminPassword
+          });
+
+          if (res.success) {
+            alert(`✓ "${name}" සාර්ථකව ඉවත් කරන ලදී.`);
+            DataService.clearCache();
+            await loadAdminProducts();
+          } else {
+            alert("අසාර්ථකයි: " + res.message);
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    // Search Filter
+    els.adminSearch.addEventListener("input", () => {
+      const q = els.adminSearch.value.trim().toLowerCase();
+      if (!q) {
+        renderAdminItems(adminProducts);
+        return;
+      }
+      const filtered = adminProducts.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+      );
+      renderAdminItems(filtered);
+    });
+
+    // Add Product Form
+    els.addForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("new-item-name").value.trim();
+      const cat = document.getElementById("new-item-cat").value.trim();
+      const price = document.getElementById("new-item-price").value.trim();
+      const unit = document.getElementById("new-item-unit").value.trim();
+
+      const btnSave = document.getElementById("btn-save-new");
+      btnSave.disabled = true;
+      btnSave.textContent = "ඇතුළත් කරමින් පවතී...";
+
+      const res = await callAdminAPI({
+        action: "addProduct",
+        name: name,
+        category: cat,
+        price: price,
+        unit: unit,
+        password: currentAdminPassword
+      });
+
+      if (res.success) {
+        alert(`✓ "${name}" භාණ්ඩය සාර්ථකව ඇතුළත් කරන ලදී!`);
+        els.addForm.reset();
+        DataService.clearCache();
+        await loadAdminProducts();
+      } else {
+        alert("අසාර්ථකයි: " + res.message);
+      }
+
+      btnSave.disabled = false;
+      btnSave.textContent = "➕ භාණ්ඩය එකතු කරන්න";
+    });
+
+    // Call Google Apps Script API
+    async function callAdminAPI(payload) {
+      if (!CONFIG.ADMIN_API_URL) {
+        alert("Google Apps Script URL එක තවම සකසා නොමැත. කරුණාකර උපදෙස් අනුව Google Sheet එකේ Script එකක් Deploy කරන්න.");
+        return { success: false, message: "No API URL" };
+      }
+
+      try {
+        const response = await fetch(CONFIG.ADMIN_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        return await response.json();
+      } catch (err) {
+        console.error("API Call Error:", err);
+        return { success: false, message: "සම්බන්ධතාවය අසාර්ථකයි: " + err.message };
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+
+</html>
