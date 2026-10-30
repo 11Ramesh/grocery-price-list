@@ -47,6 +47,10 @@ const CONFIG = {
   // If a category is not listed, a default 🛒 icon is used.
   categoryIcons: {
     "සහල්": "🌾",
+    "ධාන්‍ය වර්ග": "🥣",
+    "ධාන්‍ය": "🥣",
+    "ධාන්ය වර්ග": "🥣",
+    "ධාන්ය": "🥣",
     "පිටි": "🌿",
     "කුළු බඩු": "🌶️",
     "තෙල්": "🫙",

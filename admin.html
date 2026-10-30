@@ -556,9 +556,26 @@
               <input type="text" id="new-item-name" class="add-input" placeholder="උදා: සුදු කැකුළු සහල්" required>
             </div>
             <div>
-              <label style="font-size: 0.75rem; opacity: 0.9; margin-bottom: 4px; display: block;">කාණ්ඩය
-                (Category)</label>
-              <input type="text" id="new-item-cat" class="add-input" placeholder="උදා: සහල්, කුළුබඩු, ආදිය">
+              <label style="font-size: 0.75rem; opacity: 0.9; margin-bottom: 4px; display: block;">කාණ්ඩය (Category)</label>
+              <input type="text" id="new-item-cat" class="add-input" list="category-suggestions" placeholder="උදා: ධාන්‍ය වර්ග, සහල්, ආදිය">
+              <datalist id="category-suggestions">
+                <option value="ධාන්‍ය වර්ග">
+                <option value="සහල්">
+                <option value="පිටි">
+                <option value="කුළු බඩු">
+                <option value="තෙල්">
+                <option value="සීනි">
+                <option value="කිරි">
+                <option value="බිත්තර">
+                <option value="එළවළු">
+                <option value="පලතුරු">
+                <option value="මාළු">
+                <option value="මස්">
+                <option value="බීම">
+                <option value="බිස්කට්">
+                <option value="ටින් ආහාර">
+                <option value="සබන්">
+              </datalist>
             </div>
             <div>
               <label style="font-size: 0.75rem; opacity: 0.9; margin-bottom: 4px; display: block;">මිල (රු.) (හිස්ව තැබිය හැක)</label>
