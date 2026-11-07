@@ -810,18 +810,27 @@
     });
 
     // Refresh Data
-    els.btnRefresh.addEventListener("click", () => {
+    els.btnRefresh.addEventListener("click", async () => {
+      els.btnRefresh.disabled = true;
+      const oldHtml = els.btnRefresh.innerHTML;
+      els.btnRefresh.innerHTML = "<span>⏳...</span>";
       DataService.clearCache();
-      loadAdminProducts();
-      loadVisitorStats();
+      await Promise.all([
+        loadAdminProducts(),
+        loadVisitorStats()
+      ]);
+      els.btnRefresh.innerHTML = oldHtml;
+      els.btnRefresh.disabled = false;
     });
 
     // Show Dashboard
     async function showDashboard() {
       els.loginSection.style.display = "none";
       els.dashboardSection.style.display = "block";
-      loadAdminProducts();
-      loadVisitorStats();
+      await Promise.all([
+        loadAdminProducts(),
+        loadVisitorStats()
+      ]);
     }
 
     // Load Visitor Statistics

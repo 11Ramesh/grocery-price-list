@@ -16,6 +16,9 @@ const ADMIN_PASSWORD = "Kuru@Shop#2026";
 // Sheet name for visit logs
 const VISITS_SHEET = "Visits";
 
+// Sri Lanka Timezone
+const TIMEZONE = "Asia/Colombo";
+
 function doGet(e) {
   return handleRequest(e);
 }
@@ -59,10 +62,11 @@ function handleRequest(e) {
           visitsSheet.setFrozenRows(1);
         }
         const now = new Date();
-        const dateStr = Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd");
-        const timeStr = Utilities.formatDate(now, Session.getScriptTimeZone(), "HH:mm:ss");
+        const dateStr = Utilities.formatDate(now, TIMEZONE, "yyyy-MM-dd");
+        const timeStr = Utilities.formatDate(now, TIMEZONE, "HH:mm:ss");
         const device = (data.device || "unknown").toString().substring(0, 30);
-        visitsSheet.appendRow([dateStr, timeStr, device]);
+        // Prefix with single-quote to force plain text storage
+        visitsSheet.appendRow(["'" + dateStr, timeStr, device]);
       } catch (visitErr) {
         // Non-critical: don't fail the response
       }
@@ -136,29 +140,47 @@ function handleRequest(e) {
         }
 
         const visitData = visitsSheet.getRange(2, 1, visitsSheet.getLastRow() - 1, 1).getValues();
-        const tz = Session.getScriptTimeZone();
         const now = new Date();
-        const todayStr = Utilities.formatDate(now, tz, "yyyy-MM-dd");
+        const todayStr = Utilities.formatDate(now, TIMEZONE, "yyyy-MM-dd");
 
-        // Week start (Monday)
-        const dayOfWeek = now.getDay();
-        const diffToMon = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - diffToMon);
-        const weekStartStr = Utilities.formatDate(weekStart, tz, "yyyy-MM-dd");
+        // Calculate Monday of current week in Sri Lanka time
+        // Day of week in ISO-8601: 1 (Mon) to 7 (Sun)
+        const dayOfWeekStr = Utilities.formatDate(now, TIMEZONE, "u");
+        const dayOfWeek = parseInt(dayOfWeekStr, 10) || 1;
+        const daysToMonday = dayOfWeek - 1;
+        const weekStart = new Date(now.getTime() - (daysToMonday * 24 * 60 * 60 * 1000));
+        const weekStartStr = Utilities.formatDate(weekStart, TIMEZONE, "yyyy-MM-dd");
 
-        // Month start
-        const monthStartStr = Utilities.formatDate(now, tz, "yyyy-MM") + "-01";
+        // Month start: "YYYY-MM-01"
+        const monthStartStr = Utilities.formatDate(now, TIMEZONE, "yyyy-MM") + "-01";
 
         let todayCount = 0, weekCount = 0, monthCount = 0, totalCount = 0;
 
         for (let i = 0; i < visitData.length; i++) {
-          const dateVal = visitData[i][0] ? visitData[i][0].toString().trim() : "";
-          if (!dateVal) continue;
+          const raw = visitData[i][0];
+          if (raw === undefined || raw === null || raw === "") continue;
           totalCount++;
-          if (dateVal === todayStr) todayCount++;
-          if (dateVal >= weekStartStr) weekCount++;
-          if (dateVal >= monthStartStr) monthCount++;
+
+          let rowDateStr = "";
+          if (raw instanceof Date) {
+            rowDateStr = Utilities.formatDate(raw, TIMEZONE, "yyyy-MM-dd");
+          } else {
+            const str = raw.toString().trim().replace(/^'/, "");
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+              rowDateStr = str.substring(0, 10);
+            } else {
+              const d = new Date(str);
+              if (!isNaN(d.getTime())) {
+                rowDateStr = Utilities.formatDate(d, TIMEZONE, "yyyy-MM-dd");
+              } else {
+                rowDateStr = str.substring(0, 10);
+              }
+            }
+          }
+
+          if (rowDateStr === todayStr) todayCount++;
+          if (rowDateStr >= weekStartStr) weekCount++;
+          if (rowDateStr >= monthStartStr) monthCount++;
         }
 
         return responseJSON({

@@ -52,8 +52,14 @@ const App = (() => {
   function logVisitor() {
     try {
       if (!CONFIG.ADMIN_API_URL) return;
-      if (sessionStorage.getItem("kuru_visit_logged")) return;
-      sessionStorage.setItem("kuru_visit_logged", "1");
+
+      // Cooldown of 15 minutes per session to prevent spamming while testing
+      const lastVisit = sessionStorage.getItem("kuru_visit_time");
+      const now = Date.now();
+      if (lastVisit && (now - parseInt(lastVisit, 10)) < 15 * 60 * 1000) {
+        return;
+      }
+      sessionStorage.setItem("kuru_visit_time", now.toString());
 
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const device = isMobile ? "Mobile" : "Desktop";
