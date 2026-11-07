@@ -38,6 +38,10 @@ const CONFIG = {
   allCategoriesLabel: "සියල්ල", // Label for "show all" category chip
   productsPerPage: 200,         // Max products to render at once (performance)
 
+  // ─── Google Analytics 4 ───────────────────────────────────────────────────
+  // Measurement ID for visitor tracking (analytics.google.com)
+  GA_MEASUREMENT_ID: "G-6Q7FN085XL",
+
   // ─── Cache & Refresh ──────────────────────────────────────────────────────
   // Google Sheets published CSV can have a ~5-minute publish delay.
   // The page fetches data once per session. Use the refresh button for latest.
