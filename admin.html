@@ -594,6 +594,9 @@
           <span>● Live Google Sheet Connected</span>
         </div>
         <div class="dash-actions">
+          <a href="https://analytics.google.com" target="_blank" rel="noopener" class="btn-outline" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" title="සවිස්තර Google Analytics බලන්න">
+            <span>📊 Analytics</span>
+          </a>
           <button id="btn-refresh-data" class="btn-outline" title="නැවුම් දත්ත ලබාගන්න">
             <span>🔄 Refresh</span>
           </button>
@@ -617,6 +620,27 @@
           <div class="stat-text">
             <h4 id="stat-total-cats">0</h4>
             <p>කාණ්ඩ ගණන</p>
+          </div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #2e7d4f;">
+          <div class="stat-icon">👥</div>
+          <div class="stat-text">
+            <h4 id="stat-visitors-today">-</h4>
+            <p>අද පැමිණීම් (Today)</p>
+          </div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #1976d2;">
+          <div class="stat-icon">📈</div>
+          <div class="stat-text">
+            <h4 id="stat-visitors-week">-</h4>
+            <p>මේ සතියේ (Week)</p>
+          </div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #f57c00;">
+          <div class="stat-icon">🌐</div>
+          <div class="stat-text">
+            <h4 id="stat-visitors-total">-</h4>
+            <p>මුළු පැමිණීම් (Total)</p>
           </div>
         </div>
       </div>
@@ -789,13 +813,33 @@
     els.btnRefresh.addEventListener("click", () => {
       DataService.clearCache();
       loadAdminProducts();
+      loadVisitorStats();
     });
 
     // Show Dashboard
     async function showDashboard() {
       els.loginSection.style.display = "none";
       els.dashboardSection.style.display = "block";
-      await loadAdminProducts();
+      loadAdminProducts();
+      loadVisitorStats();
+    }
+
+    // Load Visitor Statistics
+    async function loadVisitorStats() {
+      if (!CONFIG.ADMIN_API_URL || !currentAdminPassword) return;
+      try {
+        const res = await callAdminAPI({ action: "getVisitorStats", password: currentAdminPassword });
+        if (res && res.success) {
+          const elToday = document.getElementById("stat-visitors-today");
+          const elWeek = document.getElementById("stat-visitors-week");
+          const elTotal = document.getElementById("stat-visitors-total");
+          if (elToday) elToday.textContent = (res.today !== undefined ? res.today : 0);
+          if (elWeek) elWeek.textContent = (res.week !== undefined ? res.week : 0);
+          if (elTotal) elTotal.textContent = (res.total !== undefined ? res.total : 0);
+        }
+      } catch (err) {
+        console.warn("Visitor stats error:", err);
+      }
     }
 
     // Load Products

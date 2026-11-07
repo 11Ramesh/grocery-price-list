@@ -1,17 +1,20 @@
 /**
  * ============================================================================
- * GOOGLE APPS SCRIPT CODE — කුරුදුවත්ත කඩේ ADMIN API & ACTIVE/INACTIVE STATUS
+ * GOOGLE APPS SCRIPT CODE - Kurudhuwatta Shop ADMIN API + VISITOR TRACKING
  * ============================================================================
- * 
- * 1. මෙම සම්පූර්ණ Code එක Copy කරගන්න.
- * 2. Google Sheet එකේ Extensions ➔ Apps Script ගොස් පරණ Code එක මකා මෙය Paste කරන්න.
- * 3. Save (💾) ඔබන්න.
- * 4. උඩ දකුණු පැත්තේ Deploy ➔ Manage deployments ➔ Edit (✏️) ➔ Version: "New version" ➔ Deploy ඔබන්න.
+ *
+ * 1. Copy this entire code.
+ * 2. In your Google Sheet: Extensions -> Apps Script -> replace all code -> paste.
+ * 3. Save (disk icon).
+ * 4. Deploy -> Manage deployments -> Edit (pencil) -> Version: "New version" -> Deploy.
  * ============================================================================
  */
 
-// 🔒 ඔබගේ ආරක්ෂිත Strong Password එක:
+// Admin password (server-side only - never exposed to frontend)
 const ADMIN_PASSWORD = "Kuru@Shop#2026";
+
+// Sheet name for visit logs
+const VISITS_SHEET = "Visits";
 
 function doGet(e) {
   return handleRequest(e);
@@ -26,29 +29,49 @@ function handleRequest(e) {
   lock.tryLock(10000);
 
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getActiveSheet();
+
     // Auto-create Header for Column E if missing
     const headerRow = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 5)).getValues()[0];
     if (!headerRow[4] || headerRow[4].toString().trim() === "") {
-      sheet.getRange(1, 5).setValue("තත්ත්වය");
+      sheet.getRange(1, 5).setValue("\u0dad\u0dad\u0dca\u0dad\u0dca\u0dc0\u0dba");
     }
 
     let data = {};
-
     if (e && e.postData && e.postData.contents) {
-      try {
-        data = JSON.parse(e.postData.contents);
-      } catch (err) {
-        data = e.parameter || {};
-      }
+      try { data = JSON.parse(e.postData.contents); } catch (err) { data = e.parameter || {}; }
     } else if (e && e.parameter) {
       data = e.parameter;
     }
 
     const action = data.action || "";
 
-    // 0. Public Action: REAL-TIME Instant Products Fetch
+    // ─────────────────────────────────────────────────────────────
+    // 0. PUBLIC: Log a visitor visit (called from index.html)
+    // ─────────────────────────────────────────────────────────────
+    if (action === "logVisit") {
+      try {
+        let visitsSheet = ss.getSheetByName(VISITS_SHEET);
+        if (!visitsSheet) {
+          visitsSheet = ss.insertSheet(VISITS_SHEET);
+          visitsSheet.getRange(1, 1, 1, 3).setValues([["Date", "Time", "Device"]]);
+          visitsSheet.setFrozenRows(1);
+        }
+        const now = new Date();
+        const dateStr = Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd");
+        const timeStr = Utilities.formatDate(now, Session.getScriptTimeZone(), "HH:mm:ss");
+        const device = (data.device || "unknown").toString().substring(0, 30);
+        visitsSheet.appendRow([dateStr, timeStr, device]);
+      } catch (visitErr) {
+        // Non-critical: don't fail the response
+      }
+      return responseJSON({ success: true });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 1. PUBLIC: Get Products (real-time)
+    // ─────────────────────────────────────────────────────────────
     if (action === "getProducts") {
       const values = sheet.getDataRange().getValues();
       const products = [];
@@ -57,12 +80,12 @@ function handleRequest(e) {
           const row = values[r];
           const name = row[0] ? row[0].toString().trim() : "";
           if (!name) continue;
-          const category = row[1] ? row[1].toString().trim() : "වෙනත්";
+          const category = row[1] ? row[1].toString().trim() : "\u0dc0\u0dd9\u0db1\u0dad\u0dca";
           const priceRaw = (row[2] !== undefined && row[2] !== null) ? row[2].toString().trim() : "";
           const unit = row[3] ? row[3].toString().trim() : "";
           const statusRaw = (row[4] !== undefined && row[4] !== null) ? row[4].toString().trim() : "Active";
 
-          const isInactive = /^(inactive|hide|hidden|අක්‍රිය|අක්‍රියයි|no|false|0)$/i.test(statusRaw);
+          const isInactive = /^(inactive|hide|hidden|\u0d85\u0d9a\u0dca\u200d\u0dbb\u0dd2\u0dba|\u0d85\u0d9a\u0dca\u200d\u0dbb\u0dd2\u0dba\u0dba\u0dd2|no|false|0)$/i.test(statusRaw);
           const status = isInactive ? "Inactive" : "Active";
 
           let price = null;
@@ -91,18 +114,66 @@ function handleRequest(e) {
       return responseJSON({ success: true, products: products });
     }
 
-    // ─── ADMIN ACTIONS (Password Required) ───
+    // ─────────────────────────────────────────────────────────────
+    // ADMIN ACTIONS (Password Required)
+    // ─────────────────────────────────────────────────────────────
     const password = data.password || "";
     if (password !== ADMIN_PASSWORD) {
-      return responseJSON({ success: false, message: "මුරපදය වැරදියි! (Incorrect Password)" });
+      return responseJSON({ success: false, message: "\u0db8\u0dd4\u0dbb\u0db4\u0daf\u0dba \u0dc0\u0dcf\u0dbb\u0daf\u0dd2! (Incorrect Password)" });
     }
 
-    // 1. Verify Login
+    // 2. Verify Login
     if (action === "verifyLogin") {
-      return responseJSON({ success: true, message: "Login සාර්ථකයි!" });
+      return responseJSON({ success: true, message: "Login \u0dc3\u0dcf\u0dbb\u0dca\u0da2\u0d9a\u0dba\u0dd2!" });
     }
 
-    // 2. Add New Product (with default status: Active)
+    // 3. Get Visitor Statistics (Admin only)
+    if (action === "getVisitorStats") {
+      try {
+        let visitsSheet = ss.getSheetByName(VISITS_SHEET);
+        if (!visitsSheet || visitsSheet.getLastRow() <= 1) {
+          return responseJSON({ success: true, today: 0, week: 0, month: 0, total: 0 });
+        }
+
+        const visitData = visitsSheet.getRange(2, 1, visitsSheet.getLastRow() - 1, 1).getValues();
+        const tz = Session.getScriptTimeZone();
+        const now = new Date();
+        const todayStr = Utilities.formatDate(now, tz, "yyyy-MM-dd");
+
+        // Week start (Monday)
+        const dayOfWeek = now.getDay();
+        const diffToMon = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - diffToMon);
+        const weekStartStr = Utilities.formatDate(weekStart, tz, "yyyy-MM-dd");
+
+        // Month start
+        const monthStartStr = Utilities.formatDate(now, tz, "yyyy-MM") + "-01";
+
+        let todayCount = 0, weekCount = 0, monthCount = 0, totalCount = 0;
+
+        for (let i = 0; i < visitData.length; i++) {
+          const dateVal = visitData[i][0] ? visitData[i][0].toString().trim() : "";
+          if (!dateVal) continue;
+          totalCount++;
+          if (dateVal === todayStr) todayCount++;
+          if (dateVal >= weekStartStr) weekCount++;
+          if (dateVal >= monthStartStr) monthCount++;
+        }
+
+        return responseJSON({
+          success: true,
+          today: todayCount,
+          week: weekCount,
+          month: monthCount,
+          total: totalCount
+        });
+      } catch (statsErr) {
+        return responseJSON({ success: true, today: 0, week: 0, month: 0, total: 0 });
+      }
+    }
+
+    // 4. Add New Product
     if (action === "addProduct") {
       const name = (data.name || "").trim();
       const category = (data.category || "").trim();
@@ -111,14 +182,14 @@ function handleRequest(e) {
       const status = (data.status || "Active").trim();
 
       if (!name) {
-        return responseJSON({ success: false, message: "භාණ්ඩයේ නම ඇතුළත් කරන්න." });
+        return responseJSON({ success: false, message: "\u0db7\u0dcf\u0dab\u0dca\u0da9\u0dba\u0dda \u0db1\u0db8 \u0d87\u0dad\u0dd4\u0dbd\u0dad\u0dca \u0d9a\u0dbb\u0db1\u0dca\u0db1." });
       }
 
       sheet.appendRow([name, category, price, unit, status]);
-      return responseJSON({ success: true, message: `"${name}" සාර්ථකව ඇතුළත් කරන ලදී!` });
+      return responseJSON({ success: true, message: "\"" + name + "\" \u0dc3\u0dcf\u0dbb\u0dca\u0da2\u0d9a\u0dc0 \u0d87\u0dad\u0dd4\u0dbd\u0dad\u0dca \u0d9a\u0dbb\u0db1 \u0dbd\u0daf\u0dd4!" });
     }
 
-    // 3. Update Existing Product Price
+    // 5. Update Existing Product Price
     if (action === "updatePrice") {
       const name = (data.name || "").trim();
       const newPrice = (data.price !== undefined && data.price !== null) ? data.price.toString().trim() : "";
@@ -133,15 +204,14 @@ function handleRequest(e) {
       }
 
       if (foundRow === -1) {
-        return responseJSON({ success: false, message: "භාණ්ඩය හමු නොවීය." });
+        return responseJSON({ success: false, message: "\u0db7\u0dcf\u0dab\u0dca\u0da9\u0dba \u0dc4\u0db8\u0dd4 \u0db1\u0ddc\u0dc0\u0dd4\u0dba." });
       }
 
       sheet.getRange(foundRow, 3).setValue(newPrice);
-      const displayMsg = newPrice ? `රු. ${newPrice}` : "මිල හිස් කරන ලදී";
-      return responseJSON({ success: true, message: `මිල සාර්ථකව යාවත්කාලීන විය (${displayMsg})!` });
+      return responseJSON({ success: true, message: "\u0db8\u0dd2\u0dbd \u0dc3\u0dcf\u0dbb\u0dca\u0da2\u0d9a\u0dc0 \u0dba\u0dcf\u0dc5\u0dad\u0dca \u0d9a\u0dcf\u0dbd\u0dd4\u0db1 \u0dc0\u0dd2\u0dba!" });
     }
 
-    // 4. Update Product Status (Active / Inactive)
+    // 6. Update Product Status (Active / Inactive)
     if (action === "updateStatus") {
       const name = (data.name || "").trim();
       const newStatus = (data.status || "Active").trim();
@@ -156,16 +226,17 @@ function handleRequest(e) {
       }
 
       if (foundRow === -1) {
-        return responseJSON({ success: false, message: "භාණ්ඩය හමු නොවීය." });
+        return responseJSON({ success: false, message: "\u0db7\u0dcf\u0dab\u0dca\u0da9\u0dba \u0dc4\u0db8\u0dd4 \u0db1\u0ddc\u0dc0\u0dd4\u0dba." });
       }
 
-      // Column 5 is Column E (තත්ත්වය)
       sheet.getRange(foundRow, 5).setValue(newStatus);
-      const statusSi = newStatus === "Active" ? "සක්‍රිය කරන ලදී (පාරිභෝගිකයින්ට පෙනේ)" : "අක්‍රිය කරන ලදී (පාරිභෝගිකයින්ට නොපෙනේ)";
-      return responseJSON({ success: true, message: `"${name}" ${statusSi}` });
+      const statusSi = newStatus === "Active"
+        ? "\u0dc3\u0d9a\u0dca\u200d\u0dbb\u0dd2\u0dba \u0d9a\u0dbb\u0db1 \u0dbd\u0daf\u0dd4 (\u0db4\u0dcf\u0dbb\u0dd2\u0db7\u0dcf\u0d9c\u0dd2\u0d9a\u0dba\u0dd2\u0db1\u0dca\u0da7 \u0db4\u0dd9\u0db1\u0dda)"
+        : "\u0d85\u0d9a\u0dca\u200d\u0dbb\u0dd2\u0dba \u0d9a\u0dbb\u0db1 \u0dbd\u0daf\u0dd4 (\u0db4\u0dcf\u0dbb\u0dd2\u0db7\u0dcf\u0d9c\u0dd2\u0d9a\u0dba\u0dd2\u0db1\u0dca\u0da7 \u0db1\u0ddc\u0db4\u0dd9\u0db1\u0dda)";
+      return responseJSON({ success: true, message: "\"" + name + "\" " + statusSi });
     }
 
-    // 5. Delete Product
+    // 7. Delete Product
     if (action === "deleteProduct") {
       const name = (data.name || "").trim();
       const values = sheet.getDataRange().getValues();
@@ -179,17 +250,17 @@ function handleRequest(e) {
       }
 
       if (foundRow === -1) {
-        return responseJSON({ success: false, message: "භාණ්ඩය හමු නොවීය." });
+        return responseJSON({ success: false, message: "\u0db7\u0dcf\u0dab\u0dca\u0da9\u0dba \u0dc4\u0db8\u0dd4 \u0db1\u0ddc\u0dc0\u0dd4\u0dba." });
       }
 
       sheet.deleteRow(foundRow);
-      return responseJSON({ success: true, message: `"${name}" සාර්ථකව ඉවත් කරන ලදී!` });
+      return responseJSON({ success: true, message: "\"" + name + "\" \u0dc3\u0dcf\u0dbb\u0dca\u0da2\u0d9a\u0dc0 \u0d89\u0dc0\u0dad\u0dca \u0d9a\u0dbb\u0db1 \u0dbd\u0daf\u0dd4!" });
     }
 
-    return responseJSON({ success: false, message: "වලංගු නොවන Action එකක්." });
+    return responseJSON({ success: false, message: "\u0dc0\u0dbd\u0d82\u0d9c\u0dd4 \u0db1\u0ddc\u0dc0\u0db1 Action \u0d87\u0d9a\u0d9a\u0dca." });
 
   } catch (error) {
-    return responseJSON({ success: false, message: "දෝෂයක් සිදුවිය: " + error.toString() });
+    return responseJSON({ success: false, message: "\u0daf\u0ddc\u0dc2\u0dba\u0d9a\u0dca \u0dc3\u0dd2\u0daf\u0dd4\u0dc0\u0dd2\u0dba: " + error.toString() });
   } finally {
     lock.releaseLock();
   }

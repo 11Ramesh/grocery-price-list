@@ -45,7 +45,27 @@ const App = (() => {
     resolveEls();
     applyBranding();
     bindEvents();
+    logVisitor();
     await loadData();
+  }
+
+  function logVisitor() {
+    try {
+      if (!CONFIG.ADMIN_API_URL) return;
+      if (sessionStorage.getItem("kuru_visit_logged")) return;
+      sessionStorage.setItem("kuru_visit_logged", "1");
+
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const device = isMobile ? "Mobile" : "Desktop";
+
+      fetch(CONFIG.ADMIN_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "logVisit", device: device })
+      }).catch(() => {});
+    } catch (e) {
+      // Ignore background tracking error
+    }
   }
 
   function applyBranding() {
