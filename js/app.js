@@ -53,10 +53,10 @@ const App = (() => {
     try {
       if (!CONFIG.ADMIN_API_URL) return;
 
-      // Cooldown of 15 minutes per session to prevent spamming while testing
+      // Log once per browser tab session (or after 2 minutes) so testing works smoothly
       const lastVisit = sessionStorage.getItem("kuru_visit_time");
       const now = Date.now();
-      if (lastVisit && (now - parseInt(lastVisit, 10)) < 15 * 60 * 1000) {
+      if (lastVisit && (now - parseInt(lastVisit, 10)) < 2 * 60 * 1000) {
         return;
       }
       sessionStorage.setItem("kuru_visit_time", now.toString());
